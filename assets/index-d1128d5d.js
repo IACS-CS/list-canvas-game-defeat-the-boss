@@ -981,10 +981,11 @@ class T extends p {
 /* Main game file: main.js */
 
 let gi = new T();
-
-/* Variables: Top-Level variables defined here are used to hold game state */
-
-
+//player movement shenanigans
+let px = 100;
+let py = 100;
+let ps = 10;
+let dashCD = 0;
 /* Drawing Functions */
 
 /* Example drawing function: you can add multiple drawing functions
@@ -994,7 +995,11 @@ may then want to break your drawing function down into sub-functions
 to make it easier to read/follow */
 gi.addDrawing(
   function ({ ctx, width, height, elapsed, stepTime }) {
-    // Your drawing code here...    
+    // Your drawing code here...  
+    ctx.beginPath(); 
+    ctx.fillStyle = "blue";
+    ctx.arc(px,py,10,0,Math.PI*2);
+    ctx.fill(); 
   }
 );
 
@@ -1004,8 +1009,22 @@ gi.addDrawing(
 any type of event -- keydown, mousemove, etc) */
 
 gi.addHandler(
-  "click",
+  "keydown",
   function ({ event, x, y }) {
+    if (event.key === "s") {
+    py += ps;
+  } else if (event.key === "w") {
+    py -= ps;
+  } else if (event.key === "a") {
+    px -= ps;
+  } else if (event.key === "d") {
+    px += ps;
+  } else if (event.key === "f") {
+    ps += 10;
+    dashCD += 1;
+    if (ps >= 20) {ps = 20;}
+    if (dashCD >= 1) {ps = 10, dashCD = 0;}
+  }
     // Your click handling code here...
   }
 );
@@ -1013,4 +1032,4 @@ gi.addHandler(
 
 /* Run the game */
 gi.run();
-//# sourceMappingURL=index-ffc8c822.js.map
+//# sourceMappingURL=index-d1128d5d.js.map
