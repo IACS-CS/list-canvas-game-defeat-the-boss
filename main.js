@@ -29,8 +29,8 @@ let hearts = 0
 //player movement shenanigans
 let px = 100
 let py = 100
-let ps = 10
-let dashCD = 0
+let ps = 12
+let dashCD = 1
 /* Drawing Functions */
 
 /* Example drawing function: you can add multiple drawing functions
@@ -53,28 +53,89 @@ gi.addDrawing(
 /* Example: Mouse click handler (you can change to handle 
 any type of event -- keydown, mousemove, etc) */
 
+
+/* Mr. Hinkle showed how to use a keysDown object to track
+which keys are currently down with separate keydown and keyup
+handlers and then an addDrawing for smooth updates :)
+Comment also by Mr. Hinkle because he tries to model
+best practices */
+let keysDown = { 
+  // an object to keep track of what keys are currently pressed...
+  w: false,
+  a: false,
+  s: false,
+  d: false,
+  // fill in...
+};
+
 gi.addHandler(
-  "keydown",
-  function ({ event, x, y }) {
-    if (event.key === "s") {
-    py += ps;
-  } else if (event.key === "w") {
-    py -= ps;
-  } else if (event.key === "a") {
-    px -= ps;
-  } else if (event.key === "d") {
-    px += ps;
-  } else if (event.key === "f") {
-    ps += 10
-    dashCD += 1
-    if (ps >= 20) {ps = 20}
-    if (dashCD >= 1) {ps = 10, dashCD = 0}
+  'keydown',
+  function ({ event, x, y }) {    
+    keysDown[event.key] = true;
+    console.log("keysDown:",keysDown)    
   }
-    // Your click handling code here...
+);
+gi.addHandler(
+  'keyup',
+  function ({event, x, y }) {
+    keysDown[event.key] = false;
+    console.log("keysDown:",keysDown)    
+  }
+)
+// handle motion in animation code
+gi.addDrawing(
+  function ({stepTime}) {
+    // runs 60 times a second...
+    if (keysDown.w) {
+      // is the w key still down?
+      py -= ps * 10 / stepTime;
+    }
+   }
+  )
+gi.addDrawing(
+  function ({stepTime}) {
+    // runs 60 times a second...
+    if (keysDown.s) {
+      // is the s key still down?
+      py += ps * 10 / stepTime;
+    }
+  }
+)
+gi.addDrawing(
+  function ({stepTime}) {
+    // runs 60 times a second...
+    if (keysDown.d) {
+      // is the d key still down?
+      px += ps * 10 / stepTime;
+    }
+  }
+)
+gi.addDrawing(
+  function ({stepTime}) {
+    // runs 60 times a second...
+    if (keysDown.a) {
+      // is the a key still down?
+      px -= ps * 10 / stepTime;
+    }
+  }
+)
+gi.addDrawing(
+  function ({stepTime}) {
+    // runs 60 times a second...
+    if (keysDown.f && dashCD > 0) {
+      dashCD - stepTime;
+      // is the s key still down?
+      ps += 100 / stepTime;
+    }   
   }
 )
 
-
+if (ps >= 20){
+  ps === 12
+}
+if (px >= 1000){
+  px === 10
+}
 /* Run the game */
 gi.run();
 
