@@ -30,7 +30,7 @@ let hearts = 0
 let px = 100
 let py = 100
 let ps = 12
-let dashCD = 1
+let dashCD = 99
 /* Drawing Functions */
 
 /* Example drawing function: you can add multiple drawing functions
@@ -123,19 +123,26 @@ gi.addDrawing(
   function ({stepTime}) {
     // runs 60 times a second...
     if (keysDown.f && dashCD > 0) {
-      dashCD - stepTime;
+      dashCD -= stepTime;
       // is the s key still down?
       ps += 100 / stepTime;
     }   
   }
 )
-
-if (ps >= 20){
-  ps === 12
+gi.addDrawing(
+  function ({stepTime}) {
+     if (dashCD < 99){
+      
+      dashCD += stepTime;}
+      if (dashCD > 99){
+       dashCD = 99;}
+if (ps > 12){
+  ps -= stepTime;
 }
 if (px >= 1000){
-  px === 10
+ px == 10
 }
+  }
 /* Run the game */
 gi.run();
 
