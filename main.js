@@ -23,7 +23,9 @@ let gi = new GameInterface();
 //ax speed
 //damage
 //hp amount
-let hearts = 0;
+let hp = 3;
+let iframe = 0;
+let playState = true;
 //player movement shenanigans
 let px = 100;
 let py = 300;
@@ -32,6 +34,83 @@ let dashCD = 99;
 //boss x and y
 let bx = 750;
 let by = 300;
+let ax = 0;
+let ay = 0;
+// debug helpers for axe collision visualization
+let lastAxeClosestX = 0;
+let lastAxeClosestY = 0;
+let showAxeDebug = true;
+
+// Code generated with the help of GitHub Copilot
+// Begin generated code
+/**
+ * Compute the shortest distance from point (px,py) to the line segment (x1,y1)-(x2,y2).
+ * Returns an object with the distance and the closest point coordinates.
+ * @param {number} px
+ * @param {number} py
+ * @param {number} x1
+ * @param {number} y1
+ * @param {number} x2
+ * @param {number} y2
+ * @returns {{dist:number, cx:number, cy:number}}
+ */
+function pointSegmentDistance(px, py, x1, y1, x2, y2) {
+  const vx = x2 - x1;
+  const vy = y2 - y1;
+  const wx = px - x1;
+  const wy = py - y1;
+  const vv = vx * vx + vy * vy;
+  // handle degenerate segment
+  if (vv === 0) {
+    const dx = px - x1;
+    const dy = py - y1;
+    return { dist: Math.sqrt(dx * dx + dy * dy), cx: x1, cy: y1 };
+  }
+  // projection factor t of point onto the line
+  let t = (wx * vx + wy * vy) / vv;
+  if (t < 0) t = 0;
+  if (t > 1) t = 1;
+  const cx = x1 + vx * t;
+  const cy = y1 + vy * t;
+  const dx = px - cx;
+  const dy = py - cy;
+  return { dist: Math.sqrt(dx * dx + dy * dy), cx, cy };
+}
+
+/**
+ * Check whether the player intersects the axe line (boss center to axe tip). If hit, apply damage and set iframe.
+ * @param {number} px - player x
+ * @param {number} py - player y
+ * @param {number} ax - axe tip x
+ * @param {number} ay - axe tip y
+ * @param {number} bx - boss center x
+ * @param {number} by - boss center y
+ * @param {object} [options]
+ * @param {number} [options.playerRadius=10]
+ * @param {number} [options.axeRadius=6]
+ * @param {number} [options.iframeTime=100]
+ * @returns {boolean} true if a hit occurred
+ */
+function checkAxeCollision(px, py, ax, ay, bx, by, options = {}) {
+  const playerRadius = options.playerRadius ?? 10;
+  const axeRadius = options.axeRadius ?? 6;
+  const iframeTime = options.iframeTime ?? 100;
+  const { dist, cx, cy } = pointSegmentDistance(px, py, bx, by, ax, ay);
+  // store closest point for debug drawing
+  lastAxeClosestX = cx;
+  lastAxeClosestY = cy;
+  if (dist < playerRadius + axeRadius) {
+    hp -= 1;
+    iframe = iframeTime;
+    return true;
+  }
+  return false;
+}
+// End generated code
+
+
+
+
 
 /* Drawing Functions */
 /* Example drawing function: you can add multiple drawing functions
@@ -39,12 +118,19 @@ that will be called in sequence each frame. It's a good idea to do
 one function per each object you are putting on screen, and you
 may then want to break your drawing function down into sub-functions
 to make it easier to read/follow */
+
 gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
   // Your drawing code here...
+  ctx.fillStyle = "red";
+  ctx.font = "20px Arial";
+  ctx.fillText(`health ${hp}`, 20, 20);
   ctx.beginPath();
   ctx.fillStyle = "blue";
   ctx.arc(px, py, 10, 0, Math.PI * 2);
   ctx.fill();
+  if (hp <=0 ){
+    hp = 0
+  }
 });
 
 /* Input Handlers */
@@ -53,7 +139,7 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
 any type of event -- keydown, mousemove, etc) */
 
 let enemyAttack = {
-  1: true,
+  1: false,
   2: false,
   3: false,
 };
@@ -162,11 +248,21 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
   // compute rotating endpoint so the orange line orbits the red circle
   const radius = 120; // distance from boss center to axe end
   const angle = elapsed / 300; // rotation speed (ms -> radians)
-  const ex = bx + Math.cos(angle) * radius;
-  const ey = by + Math.sin(angle) * radius;
-  ctx.lineTo(ex, ey);
+  // write to top-level axe coordinates so other code can use them
+  ax = bx + Math.cos(angle) * radius;
+  ay = by + Math.sin(angle) * radius;
+  ctx.lineTo(ax, ay);
   ctx.stroke();
 });
+
+// small debug marker to show the closest point from player to the axe line
+/*gi.addDrawing(function ({ ctx }) {
+  if (!showAxeDebug) return;
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(255,0,0,0.85)";
+  ctx.arc(lastAxeClosestX, lastAxeClosestY, 6, 0, Math.PI * 2);
+  ctx.fill();
+});*/
 //attack 1
 //pulls ax back until click and then boss dashes while spinning ax
 gi.addDrawing(function ({ stepTime }) {
@@ -187,5 +283,45 @@ gi.addDrawing(function ({ stepTime }) {
 });
 //attack 2
 gi.addDrawing(function ({ stepTime }) {});
+//damage 
+gi.addDrawing(function ({ stepTime }) {
+  // damage: use checkAxeCollision for axe hits and distance check for boss body
+  if (iframe <= 0) {
+    // try axe collision first; the function applies damage and sets iframe when hit
+    const hitAxe = checkAxeCollision(px, py, ax, ay, bx, by, { playerRadius: 10, axeRadius: 6, iframeTime: 100 });
+    if (!hitAxe) {
+      // check boss collision
+      const dxB = px - bx;
+      const dyB = py - by;
+      const distB = Math.sqrt(dxB * dxB + dyB * dyB);
+      const playerRadius = 10; // same as drawing radius for player
+      const bossRadius = 50; // boss drawing radius
+      if (distB < playerRadius + bossRadius) {
+        hp -= 1;
+        iframe = 100;
+      }
+    }
+  }
+
+  // update invulnerability timer
+  if (iframe > 0) {
+    iframe -= stepTime / 10;
+    if (iframe < 0) iframe = 0;
+  }
+  // check for game over
+  if (hp <= 0) {
+    playState = false;
+  }
+});
+
+if (playState == false){
+// Game Over Screen
+gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
+  // Your drawing code here...
+  ctx.fillStyle = "grey";
+  ctx.font = "50px Arial";
+  ctx.fillText(`Game Over`, width / 2 - 100, height / 2);
+});
 /* Run the game */
 gi.run();
+
