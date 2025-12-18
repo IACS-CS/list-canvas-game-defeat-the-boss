@@ -981,6 +981,7 @@ class T extends p {
 /* Main game file: main.js */
 
 let gi = new T();
+let hearts = 3;
 //player movement shenanigans
 let px = 100;
 let py = 300;
@@ -989,7 +990,6 @@ let dashCD = 99;
 //boss x and y
 let bx = 750;
 let by = 300;
-
 /* Drawing Functions */
 /* Example drawing function: you can add multiple drawing functions
 that will be called in sequence each frame. It's a good idea to do 
@@ -1003,6 +1003,12 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
   ctx.arc(px, py, 10, 0, Math.PI * 2);
   ctx.fill();
 });
+
+/* Input Handlers */
+
+/* Example: Mouse click handler (you can change to handle 
+any type of event -- keydown, mousemove, etc) */
+
 /* Mr. Hinkle showed how to use a keysDown object to track
 which keys are currently down with separate keydown and keyup
 handlers and then an addDrawing for smooth updates :)
@@ -1016,7 +1022,6 @@ let keysDown = {
   d: false,
   // fill in...
 };
-
 gi.addHandler("keydown", function ({ event, x, y }) {
   keysDown[event.key] = true;
   console.log("keysDown:", keysDown);
@@ -1025,7 +1030,18 @@ gi.addHandler("keyup", function ({ event, x, y }) {
   keysDown[event.key] = false;
   console.log("keysDown:", keysDown);
 });
+// heart display function
+gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
+  // Your drawing code here...
+  ctx.fillStyle = "red";
+  ctx.font = "20px Arial";
+  ctx.fillText(`Health - ${hearts}`, 20, 20);
+});
+// execute the game over. Game over!
+gi.addDrawing(function ({ stepTime }) {
+});
 // handle motion in animation code
+
 gi.addDrawing(function ({ stepTime }) {
   // runs 60 times a second...
   if (keysDown.w) {
@@ -1099,22 +1115,7 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
   ctx.arc(bx, by, 50, 0, Math.PI * 2);
   ctx.fill();
 });
-//Ax
-gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
-  // Your drawing code here...
-  ctx.beginPath();
-  ctx.strokeStyle = "orange";
-  ctx.moveTo(bx, by);
-  // compute rotating endpoint so the orange line orbits the red circle
-  const radius = 120; // distance from boss center to axe end
-  const angle = elapsed / 300; // rotation speed (ms -> radians)
-  const ex = bx + Math.cos(angle) * radius;
-  const ey = by + Math.sin(angle) * radius;
-  ctx.lineTo(ex, ey);
-  ctx.stroke();
-});
 //attack 1
-//pulls ax back until click and then boss dashes while spinning ax
 gi.addDrawing(function ({ stepTime }) {
   {
     // move boss toward player on x axis
@@ -1132,7 +1133,8 @@ gi.addDrawing(function ({ stepTime }) {
   }
 });
 //attack 2
-gi.addDrawing(function ({ stepTime }) {});
+gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
+});
 /* Run the game */
 gi.run();
-//# sourceMappingURL=index-c8cc7917.js.map
+//# sourceMappingURL=index-edf5b21b.js.map
