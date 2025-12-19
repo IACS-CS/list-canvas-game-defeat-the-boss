@@ -1106,17 +1106,17 @@ function updateEnemyAttacks(width, height, stepTime) {
   iframe = 50;
   iframeTimer(stepTime);
   if (!enemyAttack[2]) {
-    blipy = 0;
+    blipy = -10;
   }
   if (!enemyAttack[1]) {
-    bx = width / 2; 
-    by = height / 2; 
+    bx = width / 2;
+    by = height / 2;
   }
   if (!enemyAttack[3]) {
     mbx1 = width / 4;
-    mby1 = -100;
+    mby1 = -20;
     mbx2 = width / 1.25;
-    mby2 = -100;
+    mby2 = -20;
   }
 }
 // attack timer - update the enemy attack timer and select new attacks
@@ -1130,11 +1130,12 @@ function updateEnemyAttackTimer(stepTime, width, height) {
   if (enemyAttackTimer <= 0) {
     enemyAttackTimer = 0;
     //reset attacks
+    // AI generated code
     enemyAttack[1] = false;
     enemyAttack[2] = false;
     enemyAttack[3] = false;
     updateEnemyAttacks(width, height, stepTime);
-    //choose new attack
+    //choose new attack 
     let attackChoice = Math.floor(Math.random() * 3) + 1;
     enemyAttack[attackChoice] = true;
     enemyAttackTimer = 500;
@@ -1308,7 +1309,7 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
     } else if (px < mbx1 && px < width / 2) {
       mbx1 -= stepTime / 3.5;
     } else {
-      mbx1 = width / 4;
+      mbx1 = mbx1;
     }
     if (py > mby1 && px < width / 2) {
       mby1 += stepTime / 3.5;
@@ -1321,7 +1322,7 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
     } else if (px < mbx2 && px > width / 2) {
       mbx2 -= stepTime / 3.5;
     } else {
-      mbx2 = width / 1.25;
+      mbx2 = mbx2;
     }
     if (py > mby2 && px > width / 2) {
       mby2 += stepTime / 3.5;
@@ -1332,4 +1333,4 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
 });
 /* Run the game */
 gi.run();
-//# sourceMappingURL=index-75d403b9.js.map
+//# sourceMappingURL=index-8e03229d.js.map
