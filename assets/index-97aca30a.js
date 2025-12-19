@@ -1085,16 +1085,12 @@ gi.addDrawing(function ({ stepTime }) {
   iframeTimer(stepTime);
 });
 // execute the game over. Game over!
-gi.addDrawing(function ({ ctx, width, height, stepTime }) {
-  if (hearts <= 0) {
-    gameOver(ctx, width, height);
-  }
-});
+
 // game over function
 function gameOver(ctx, width, height) {
   ctx.fillStyle = "grey";
   ctx.font = "50px Arial";
-  ctx.fillText(`Game Over...`, width / 2, height / 2);
+  ctx.fillText(`Game Over...`, width / 5, height / 2);
   gi.stop();
 }
 // update timeSurvived
@@ -1216,6 +1212,11 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
   ctx.arc(bx, by, 50, 0, Math.PI * 2);
   ctx.fill();
 });
+gi.addDrawing(function ({ ctx, width, height, stepTime }) {
+  if (hearts <= 0) {
+    gameOver(ctx, width, height);
+  }
+});
 gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
   // Your drawing code here...
   ctx.beginPath();
@@ -1333,4 +1334,4 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
 });
 /* Run the game */
 gi.run();
-//# sourceMappingURL=index-8e03229d.js.map
+//# sourceMappingURL=index-97aca30a.js.map
