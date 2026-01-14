@@ -982,6 +982,18 @@ class T extends p {
 
 let gi = new T();
 
+/* Constants: Named constants to avoid magic numbers */
+const mediumModeStart = 30; // seconds when medium difficulty begins
+const hardModeStart = 60; // seconds when hard difficulty begins
+const maxHearts = 5; // maximum health
+const easyGreenCount = 3; // health pickups in easy mode
+const mediumGreenCount = 1; // health pickups in medium mode
+const hardGreenCount = 1; // health pickups in hard mode
+const easyRedCount = 0; // traps in easy mode
+const mediumRedCount = 1; // traps in medium mode
+const hardRedCount = 4; // traps in hard mode
+const collectibleRadius = 8; // size of collectible circles
+
 /* Variables: Top-Level variables defined here are used to hold game state */
 //hp amount and invulnerability timer
 let iframe = 0;
@@ -990,7 +1002,6 @@ let hearts = 3;
 let px = 100;
 let py = 300;
 let ps = 12;
-let dashCD = 99;
 //enemy x and y positions
 let bx = 750;
 let by = 300;
@@ -1002,11 +1013,77 @@ let mby2 = 0;
 let timeSurvived = 0;
 //enemy attack list and timer
 let enemyAttackTimer = 0;
-let enemyAttack = {
-  1: false,
-  2: false,
-  3: false,
-};
+let attack4Unlocked = false; // track if hard mode attack is unlocked
+// Begin generated code (AI-assisted): collectible arrays
+let greenCircles = []; // health pickups
+let redCircles = []; // trap circles
+// End generated code
+// Begin generated code (AI-assisted): enemy attack list with iteration
+const enemyAttacks = [
+  { id: 1, active: false },
+  { id: 2, active: false },
+  { id: 3, active: false },
+];
+
+function resetEnemyAttacks() {
+  for (let i = 0; i < enemyAttacks.length; i++) {
+    enemyAttacks[i].active = false;
+  }
+}
+
+function chooseAttack() {
+  resetEnemyAttacks();
+  const pick = Math.floor(Math.random() * enemyAttacks.length);
+  enemyAttacks[pick].active = true;
+}
+
+function isActive(id) {
+  for (let i = 0; i < enemyAttacks.length; i++) {
+    if (enemyAttacks[i].id === id) {
+      return enemyAttacks[i].active;
+    }
+  }
+  return false;
+}
+
+// Begin generated code (AI-assisted): spawn collectibles based on difficulty
+function spawnCollectibles(width, height) {
+  greenCircles = [];
+  redCircles = [];
+
+  // Determine difficulty based on time survived
+  let greenCount = easyGreenCount; // default easy
+  let redCount = easyRedCount;
+
+  if (timeSurvived > hardModeStart) {
+    // Hard mode
+    greenCount = hardGreenCount;
+    redCount = hardRedCount;
+  } else if (timeSurvived > mediumModeStart) {
+    // Medium mode
+    greenCount = mediumGreenCount;
+    redCount = mediumRedCount;
+  }
+
+  // Spawn green circles
+  for (let i = 0; i < greenCount; i++) {
+    greenCircles.push({
+      x: Math.random() * (width - 40) + 20,
+      y: Math.random() * (height - 40) + 20,
+      radius: collectibleRadius,
+    });
+  }
+
+  // Spawn red circles
+  for (let i = 0; i < redCount; i++) {
+    redCircles.push({
+      x: Math.random() * (width - 40) + 20,
+      y: Math.random() * (height - 40) + 20,
+      radius: collectibleRadius,
+    });
+  }
+}
+// End generated code
 /* Drawing Functions */
 /* Example drawing function: you can add multiple drawing functions
 that will be called in sequence each frame. It's a good idea to do 
@@ -1050,10 +1127,20 @@ gi.addHandler("keyup", function ({ event, x, y }) {
 // heart and time display function
 gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
   // Your drawing code here...
-  ctx.fillStyle = "red";
+  ctx.fillStyle = "green";
   ctx.font = "20px Arial";
   ctx.fillText(`Health - ${hearts}`, 20, 20);
   ctx.fillText(`Time Survived - ${timeSurvived.toFixed(2)}`, width / 2, 20);
+  if (timeSurvived <= mediumModeStart) {
+    ctx.fillText(`Easy`, 20, 40);
+  } else if (timeSurvived >= mediumModeStart && timeSurvived <= hardModeStart) {
+    ctx.fillStyle = "orange";
+    ctx.fillText(`Medium`, 20, 40);
+    ctx.fillText(`Don't collect the red circles!`, 20, 60);
+  } else {
+    ctx.fillStyle = "red";
+    ctx.fillText(`Hard`, 20, 40);
+  }
 });
 
 function damage() {
@@ -1096,26 +1183,35 @@ function gameOver(ctx, width, height) {
 // update timeSurvived
 gi.addDrawing(function ({ stepTime }) {
   timeSurvived += stepTime / 1000;
+
+  // Begin generated code (AI-assisted): unlock attack 4 after 10 seconds
+  // Add a 4th attack to the array when player survives to medium mode
+  if (timeSurvived > mediumModeStart && !attack4Unlocked) {
+    enemyAttacks.push({ id: 4, active: false });
+    attack4Unlocked = true;
+    console.log("Medium mode unlocked! Attack 4 added to pool.");
+  }
+  // End generated code
 });
-// attacks' data to default positions
-function updateEnemyAttacks(width, height, stepTime) {
+// enemyAttacks' data to default positions
+function updateEnemyenemyAttacks(width, height, stepTime) {
   iframe = 50;
   iframeTimer(stepTime);
-  if (!enemyAttack[2]) {
+  if (!isActive(2)) {
     blipy = -10;
   }
-  if (!enemyAttack[1]) {
+  if (!isActive(1)) {
     bx = width / 2;
     by = height / 2;
   }
-  if (!enemyAttack[3]) {
+  if (!isActive(3)) {
     mbx1 = width / 4;
     mby1 = -20;
     mbx2 = width / 1.25;
     mby2 = -20;
   }
 }
-// attack timer - update the enemy attack timer and select new attacks
+// attack timer - update the enemy attack timer and select new enemyAttacks
 gi.addDrawing(function ({ stepTime, width, height }) {
   updateEnemyAttackTimer(stepTime, width, height);
 });
@@ -1124,16 +1220,10 @@ function updateEnemyAttackTimer(stepTime, width, height) {
     enemyAttackTimer -= stepTime / 10;
   }
   if (enemyAttackTimer <= 0) {
-    enemyAttackTimer = 0;
-    //reset attacks
-    // AI generated code
-    enemyAttack[1] = false;
-    enemyAttack[2] = false;
-    enemyAttack[3] = false;
-    updateEnemyAttacks(width, height, stepTime);
-    //choose new attack 
-    let attackChoice = Math.floor(Math.random() * 3) + 1;
-    enemyAttack[attackChoice] = true;
+    resetEnemyAttacks();
+    updateEnemyenemyAttacks(width, height, stepTime);
+    chooseAttack();
+    spawnCollectibles(width, height); // spawn collectibles with each attack
     enemyAttackTimer = 500;
   }
 }
@@ -1167,30 +1257,7 @@ gi.addDrawing(function ({ stepTime }) {
     px -= (ps * 10) / stepTime;
   }
 });
-gi.addDrawing(function ({ stepTime }) {
-  // runs 60 times a second...
-  if (keysDown.f && dashCD > 0) {
-    dashCD -= stepTime;
-    // is the s key still down?
-    ps += 100 / stepTime;
-  }
-});
-//dash cooldown
 gi.addDrawing(function ({ stepTime, width, height }) {
-  if (dashCD < 99) {
-    dashCD += stepTime / 20;
-  }
-  if (dashCD > 99) {
-    dashCD = 99;
-  }
-  //speed reset
-  if (ps > 12) {
-    ps -= stepTime / 10;
-    if (ps < 12) {
-      ps = 12;
-    }
-    //boundarys
-  }
   if (px >= width) {
     px = width;
   }
@@ -1257,7 +1324,7 @@ gi.addDrawing(function ({ stepTime }) {
 });
 //attack 1
 gi.addDrawing(function ({ stepTime }) {
-  if (enemyAttack[1]) {
+  if (isActive(1)) {
     // move boss toward player on x axis
     if (px > bx) {
       bx += stepTime / 5;
@@ -1274,7 +1341,7 @@ gi.addDrawing(function ({ stepTime }) {
 });
 //attack 2
 gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
-  if (enemyAttack[2]) {
+  if (isActive(2)) {
     // Your attack 2 code here...
     ctx.fillStyle = "orange";
     let blipx = 0;
@@ -1302,15 +1369,13 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
 });
 // attack 3
 gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
-  if (enemyAttack[3]) {
+  if (isActive(3)) {
     // Your attack 3 code here...
     //first circle
     if (px > mbx1 && px < width / 2) {
       mbx1 += stepTime / 3.5;
     } else if (px < mbx1 && px < width / 2) {
       mbx1 -= stepTime / 3.5;
-    } else {
-      mbx1 = mbx1;
     }
     if (py > mby1 && px < width / 2) {
       mby1 += stepTime / 3.5;
@@ -1322,8 +1387,6 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
       mbx2 += stepTime / 3.5;
     } else if (px < mbx2 && px > width / 2) {
       mbx2 -= stepTime / 3.5;
-    } else {
-      mbx2 = mbx2;
     }
     if (py > mby2 && px > width / 2) {
       mby2 += stepTime / 3.5;
@@ -1332,6 +1395,83 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
     }
   }
 });
+// attack 4 - horizontal projectiles (hard mode)
+// Begin generated code (AI-assisted): attack 4 implementation
+let purpleX1 = 0; // left to right
+let purpleX2 = 0; // right to left
+
+gi.addDrawing(function ({ ctx, width, height, stepTime }) {
+  if (isActive(4)) {
+    ctx.fillStyle = "purple";
+
+    // First projectile moves left to right (50 above center)
+    purpleX1 += stepTime / 3;
+    if (purpleX1 > width) purpleX1 = 0;
+
+    // Second projectile moves right to left (50 below center)
+    purpleX2 -= stepTime / 3;
+    if (purpleX2 < 0) purpleX2 = width;
+
+    // Draw first projectile (50 above center)
+    ctx.beginPath();
+    ctx.arc(purpleX1, height / 2 - 50, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw second projectile (50 below center)
+    ctx.beginPath();
+    ctx.arc(purpleX2, height / 2 + 50, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Collision detection
+    const dist1 = Math.sqrt(
+      (px - purpleX1) ** 2 + (py - (height / 2 - 50)) ** 2
+    );
+    const dist2 = Math.sqrt(
+      (px - purpleX2) ** 2 + (py - (height / 2 + 50)) ** 2
+    );
+    if (dist1 < 20 || dist2 < 20) damage();
+  }
+});
+// End generated code
+
+// Begin generated code (AI-assisted): draw and handle collectibles
+// Draw and handle green circles (health)
+gi.addDrawing(function ({ ctx }) {
+  ctx.fillStyle = "green";
+  for (let i = greenCircles.length - 1; i >= 0; i--) {
+    const circle = greenCircles[i];
+    ctx.beginPath();
+    ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Check collision with player
+    const dist = Math.sqrt((px - circle.x) ** 2 + (py - circle.y) ** 2);
+    if (dist < 10 + circle.radius) {
+      if (hearts < maxHearts) hearts += 1; // add health up to maximum
+      greenCircles.splice(i, 1); // remove from array
+    }
+  }
+});
+
+// Draw and handle red circles (traps)
+gi.addDrawing(function ({ ctx }) {
+  ctx.fillStyle = "red";
+  for (let i = redCircles.length - 1; i >= 0; i--) {
+    const circle = redCircles[i];
+    ctx.beginPath();
+    ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Check collision with player
+    const dist = Math.sqrt((px - circle.x) ** 2 + (py - circle.y) ** 2);
+    if (dist < 10 + circle.radius) {
+      damage(); // subtract health
+      redCircles.splice(i, 1); // remove from array
+    }
+  }
+});
+// End generated code
+
 /* Run the game */
 gi.run();
-//# sourceMappingURL=index-97aca30a.js.map
+//# sourceMappingURL=index-2e56bc62.js.map
