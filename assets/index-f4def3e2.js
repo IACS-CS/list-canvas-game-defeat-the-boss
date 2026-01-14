@@ -1141,7 +1141,7 @@ gi.addDrawing(function ({ ctx, width, height, elapsed, stepTime }) {
     ctx.fillStyle = "red";
     ctx.fillText(`Hard`, 20, 40);
   }
-  if (timeSurvived <= 10) {
+  if (timeSurvived <= mediumModeStart) {
     ctx.fillStyle = "blue";
     ctx.fillText(`Use WASD or Arrow keys to move!`, width / 2 - 100, height - 20);
   }
@@ -1478,4 +1478,4 @@ gi.addDrawing(function ({ ctx }) {
 
 /* Run the game */
 gi.run();
-//# sourceMappingURL=index-1b404a58.js.map
+//# sourceMappingURL=index-f4def3e2.js.map
