@@ -303,7 +303,7 @@ gi.addDrawing(function ({ stepTime, width, height }) {
   }
   if (px >= width) {
     px = width;
-}
+  }
   if (px <= 0) {
     px = 0;
   }
